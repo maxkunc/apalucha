@@ -99,16 +99,19 @@ export default function App() {
                     Merch pro tento ročník brzy přibude.
                   </p>
                 ) : (
-                  <div className="flex flex-wrap justify-center gap-x-16 lg:gap-x-24 gap-y-20">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-16 sm:gap-x-16 lg:gap-x-24 sm:gap-y-20">
                     {seasonItems.map((item) => (
-                      <div key={item.id} className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+                      <div
+                        key={item.id}
+                        className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
+                      >
                         <img
                           src={item.image_url || PLACEHOLDER_IMG}
                           alt={`${item.name} – přední strana`}
                           loading="lazy"
-                          className="w-56 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain transition-transform duration-300 hover:scale-105"
+                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-105"
                         />
-                        <div className="min-w-[110px]">
+                        <div className="min-w-[110px] text-center sm:text-left">
                           <p className="text-base sm:text-lg font-bold uppercase tracking-wide">{item.name}</p>
                           <p className="text-base sm:text-lg font-semibold text-gray-600">{item.price_kc} KČ</p>
                         </div>
@@ -116,7 +119,7 @@ export default function App() {
                           src={item.image_back_url || item.image_url || PLACEHOLDER_IMG}
                           alt={`${item.name} – zadní strana`}
                           loading="lazy"
-                          className="w-56 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain transition-transform duration-300 hover:scale-105"
+                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-105"
                         />
                       </div>
                     ))}
