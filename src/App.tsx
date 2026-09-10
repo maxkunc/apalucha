@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-
-interface Season {
-  id: string
-  year: number
-}
+import { seasonLabel, sortSeasons, type Season } from './seasons'
 
 interface Item {
   id: string
@@ -37,7 +33,7 @@ export default function App() {
           { data: seasonsData, error: seasonsError },
           { data: itemsData, error: itemsError },
         ] = await Promise.all([
-          supabase.from('seasons').select('id, year').order('year', { ascending: false }),
+          supabase.from('seasons').select('id, year, term').order('year', { ascending: false }),
           supabase
             .from('merch_items')
             .select('id, season_id, name, price_kc, image_url, image_back_url')
@@ -51,7 +47,7 @@ export default function App() {
           return
         }
 
-        setSeasons(seasonsData ?? [])
+        setSeasons(sortSeasons(seasonsData ?? []))
         setItems(itemsData ?? [])
       } catch {
         if (!cancelled) setError(true)
@@ -92,7 +88,7 @@ export default function App() {
             return (
               <section key={season.id} className={index === 0 ? '' : 'mt-28 sm:mt-36'}>
                 <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight mb-12 sm:mb-16">
-                  {season.year}
+                  {seasonLabel(season)}
                 </h2>
                 {seasonItems.length === 0 ? (
                   <p className="text-sm uppercase tracking-wide text-gray-400">

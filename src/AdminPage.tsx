@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase, ADMIN_EMAIL } from './supabase'
-
-interface Season {
-  id: string
-  year: number
-}
+import { seasonLabel, sortSeasons, TERM_LABEL, type Season } from './seasons'
 
 interface Item {
   id: string
@@ -119,6 +115,7 @@ function AdminForms() {
   const [items, setItems] = useState<Item[]>([])
   const [loaded, setLoaded] = useState(false)
   const [seasonYear, setSeasonYear] = useState('')
+  const [seasonTerm, setSeasonTerm] = useState<'jaro' | 'podzim'>('jaro')
   const [seasonMsg, setSeasonMsg] = useState('')
 
   const [itemSeasonId, setItemSeasonId] = useState('')
@@ -129,9 +126,10 @@ function AdminForms() {
   const backRef = useRef<HTMLInputElement>(null)
 
   async function refreshSeasons() {
-    const { data } = await supabase.from('seasons').select('id, year').order('year', { ascending: false })
-    setSeasons(data ?? [])
-    setItemSeasonId((current) => current || (data && data[0]?.id) || '')
+    const { data } = await supabase.from('seasons').select('id, year, term').order('year', { ascending: false })
+    const sorted = sortSeasons(data ?? [])
+    setSeasons(sorted)
+    setItemSeasonId((current) => current || sorted[0]?.id || '')
   }
 
   async function refreshItems() {
@@ -153,7 +151,9 @@ function AdminForms() {
   async function handleAddSeason(e: FormEvent) {
     e.preventDefault()
     setSeasonMsg('Ukládám...')
-    const { error } = await supabase.from('seasons').insert({ year: parseInt(seasonYear, 10) })
+    const { error } = await supabase
+      .from('seasons')
+      .insert({ year: parseInt(seasonYear, 10), term: seasonTerm })
     if (error) {
       setSeasonMsg(`Nepodařilo se přidat ročník: ${errorMessage(error)}`)
     } else {
@@ -226,6 +226,23 @@ function AdminForms() {
             className={textInput}
           />
         </label>
+        <fieldset className={fieldLabel}>
+          Termín
+          <div className="flex gap-4 mt-1">
+            {(['jaro', 'podzim'] as const).map((term) => (
+              <label key={term} className="flex items-center gap-2 text-sm font-normal normal-case tracking-normal">
+                <input
+                  type="radio"
+                  name="term"
+                  value={term}
+                  checked={seasonTerm === term}
+                  onChange={() => setSeasonTerm(term)}
+                />
+                {TERM_LABEL[term]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <button type="submit" className={primaryButton}>
           Přidat ročník
         </button>
@@ -244,7 +261,7 @@ function AdminForms() {
           >
             {seasons.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.year}
+                {seasonLabel(s)}
               </option>
             ))}
           </select>
@@ -293,7 +310,7 @@ function AdminForms() {
           const seasonItems = items.filter((i) => i.season_id === season.id)
           return (
             <div key={season.id}>
-              <p className="text-base font-bold mb-2">{season.year}</p>
+              <p className="text-base font-bold mb-2">{seasonLabel(season)}</p>
               {seasonItems.length === 0 ? (
                 <p className="text-sm text-gray-400">Bez kousků.</p>
               ) : (
