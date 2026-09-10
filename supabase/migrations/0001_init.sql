@@ -12,6 +12,7 @@ create table if not exists public.merch_items (
   name text not null,
   price_kc integer not null,
   image_url text,
+  image_back_url text,
   created_at timestamptz not null default now()
 );
 
@@ -89,10 +90,31 @@ create policy "Admin can delete merch images"
   to authenticated
   using (bucket_id = 'merch-images' and (auth.jwt() ->> 'email') = 'kunc.maxik@gmail.com');
 
--- Seed ten seasons (2017–2026) with one example item on the latest one
+-- Seed ten seasons (2017–2026) with a few example items
 insert into public.seasons (year) values
   (2017), (2018), (2019), (2020), (2021), (2022), (2023), (2024), (2025), (2026)
 on conflict (year) do nothing;
 
-insert into public.merch_items (season_id, name, price_kc)
-select id, 'Černé triko', 400 from public.seasons where year = 2026;
+insert into public.merch_items (season_id, name, price_kc, image_url, image_back_url)
+select id, 'Černé triko', 400,
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-black.png',
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-black.png'
+from public.seasons where year = 2026;
+
+insert into public.merch_items (season_id, name, price_kc, image_url, image_back_url)
+select id, 'Bílé triko', 420,
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-white.png',
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-white.png'
+from public.seasons where year = 2026;
+
+insert into public.merch_items (season_id, name, price_kc, image_url, image_back_url)
+select id, 'Bílé triko', 380,
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-white.png',
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-white.png'
+from public.seasons where year = 2025;
+
+insert into public.merch_items (season_id, name, price_kc, image_url, image_back_url)
+select id, 'Černé triko', 420,
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-black.png',
+  'https://maxkunc.github.io/apalucha/placeholder-tshirt-black.png'
+from public.seasons where year = 2024;
