@@ -306,32 +306,121 @@ function AdminForms() {
       <h2 className="text-sm font-bold uppercase tracking-wide mt-10 mb-4">Přehled sezón</h2>
       {loaded && seasons.length === 0 && <p className="text-sm text-gray-500">Zatím žádné ročníky.</p>}
       <div className="flex flex-col gap-8">
-        {seasons.map((season) => {
-          const seasonItems = items.filter((i) => i.season_id === season.id)
-          return (
-            <div key={season.id}>
-              <p className="text-base font-bold mb-2">{seasonLabel(season)}</p>
-              {seasonItems.length === 0 ? (
-                <p className="text-sm text-gray-400">Bez kousků.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {seasonItems.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3 text-sm">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt={item.name} className="w-10 h-10 object-contain" />
-                      ) : (
-                        <span className="w-10 h-10" />
-                      )}
-                      <span className="flex-1">{item.name}</span>
-                      <span className="text-gray-600">{item.price_kc} KČ</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )
-        })}
+        {seasons.map((season) => (
+          <SeasonRow
+            key={season.id}
+            season={season}
+            items={items.filter((i) => i.season_id === season.id)}
+            onChanged={refreshSeasons}
+          />
+        ))}
       </div>
+    </div>
+  )
+}
+
+function SeasonRow({ season, items, onChanged }: { season: Season; items: Item[]; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const [year, setYear] = useState(String(season.year))
+  const [term, setTerm] = useState<'jaro' | 'podzim' | ''>(season.term ?? '')
+  const [msg, setMsg] = useState('')
+
+  function startEdit() {
+    setYear(String(season.year))
+    setTerm(season.term ?? '')
+    setMsg('')
+    setEditing(true)
+  }
+
+  async function handleSave(e: FormEvent) {
+    e.preventDefault()
+    setMsg('Ukládám...')
+    const { error } = await supabase
+      .from('seasons')
+      .update({ year: parseInt(year, 10), term: term || null })
+      .eq('id', season.id)
+    if (error) {
+      setMsg(`Nepodařilo se uložit: ${errorMessage(error)}`)
+    } else {
+      setEditing(false)
+      onChanged()
+    }
+  }
+
+  if (editing) {
+    return (
+      <form onSubmit={handleSave} className="flex flex-col gap-3">
+        <div className="flex gap-4 flex-wrap">
+          <label className={fieldLabel}>
+            Rok
+            <input
+              type="number"
+              min={1900}
+              max={2999}
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              required
+              className={textInput}
+            />
+          </label>
+          <fieldset className={fieldLabel}>
+            Termín
+            <div className="flex gap-3 mt-1">
+              {(['', 'jaro', 'podzim'] as const).map((t) => (
+                <label
+                  key={t || 'none'}
+                  className="flex items-center gap-1 text-sm font-normal normal-case tracking-normal"
+                >
+                  <input
+                    type="radio"
+                    name={`term-${season.id}`}
+                    checked={term === t}
+                    onChange={() => setTerm(t)}
+                  />
+                  {t ? TERM_LABEL[t] : 'Bez termínu'}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+        <div className="flex gap-4 items-center">
+          <button type="submit" className={primaryButton}>
+            Uložit
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className={linkButton}>
+            Zrušit
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 min-h-[1.2em]">{msg}</p>
+      </form>
+    )
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <p className="text-base font-bold">{seasonLabel(season)}</p>
+        <button type="button" onClick={startEdit} className={linkButton}>
+          Upravit
+        </button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-gray-400">Bez kousků.</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-center gap-3 text-sm">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.name} className="w-10 h-10 object-contain" />
+              ) : (
+                <span className="w-10 h-10" />
+              )}
+              <span className="flex-1">{item.name}</span>
+              <span className="text-gray-600">{item.price_kc} KČ</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
