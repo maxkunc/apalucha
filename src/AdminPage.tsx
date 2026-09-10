@@ -6,6 +6,21 @@ interface Season {
   year: number
 }
 
+interface Item {
+  id: string
+  season_id: string
+  name: string
+  price_kc: number
+  image_url: string | null
+}
+
+function errorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
+    return (err as { message: string }).message
+  }
+  return 'neznámá chyba'
+}
+
 const fieldLabel = 'flex flex-col gap-1 text-xs font-bold uppercase tracking-wide'
 const textInput =
   'border-2 border-black px-3 py-2 text-base font-normal normal-case tracking-normal bg-white focus:outline-2 focus:outline-black'
@@ -55,7 +70,7 @@ function LoginForm() {
     e.preventDefault()
     setMsg('Přihlašuji...')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setMsg(error ? 'Přihlášení se nezdařilo.' : '')
+    setMsg(error ? `Přihlášení se nezdařilo: ${errorMessage(error)}` : '')
   }
 
   async function handleForgot() {
@@ -101,6 +116,8 @@ function LoginForm() {
 
 function AdminForms() {
   const [seasons, setSeasons] = useState<Season[]>([])
+  const [items, setItems] = useState<Item[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [seasonYear, setSeasonYear] = useState('')
   const [seasonMsg, setSeasonMsg] = useState('')
 
@@ -117,8 +134,16 @@ function AdminForms() {
     setItemSeasonId((current) => current || (data && data[0]?.id) || '')
   }
 
+  async function refreshItems() {
+    const { data } = await supabase
+      .from('merch_items')
+      .select('id, season_id, name, price_kc, image_url')
+      .order('created_at', { ascending: true })
+    setItems(data ?? [])
+  }
+
   useEffect(() => {
-    refreshSeasons()
+    Promise.all([refreshSeasons(), refreshItems()]).then(() => setLoaded(true))
   }, [])
 
   async function handleLogout() {
@@ -130,7 +155,7 @@ function AdminForms() {
     setSeasonMsg('Ukládám...')
     const { error } = await supabase.from('seasons').insert({ year: parseInt(seasonYear, 10) })
     if (error) {
-      setSeasonMsg('Nepodařilo se přidat ročník.')
+      setSeasonMsg(`Nepodařilo se přidat ročník: ${errorMessage(error)}`)
     } else {
       setSeasonMsg('Ročník přidán.')
       setSeasonYear('')
@@ -147,6 +172,12 @@ function AdminForms() {
 
   async function handleAddItem(e: FormEvent) {
     e.preventDefault()
+
+    if (!itemSeasonId) {
+      setItemMsg('Nejprve vytvořte ročník výše.')
+      return
+    }
+
     setItemMsg('Ukládám...')
     try {
       const frontFile = frontRef.current?.files?.[0] ?? null
@@ -168,8 +199,9 @@ function AdminForms() {
       setItemPrice('')
       if (frontRef.current) frontRef.current.value = ''
       if (backRef.current) backRef.current.value = ''
-    } catch {
-      setItemMsg('Nepodařilo se přidat kousek.')
+      await refreshItems()
+    } catch (err) {
+      setItemMsg(`Nepodařilo se přidat kousek: ${errorMessage(err)}`)
     }
   }
 
@@ -253,6 +285,36 @@ function AdminForms() {
         </button>
         <p className="text-sm text-gray-600 min-h-[1.2em]">{itemMsg}</p>
       </form>
+
+      <h2 className="text-sm font-bold uppercase tracking-wide mt-10 mb-4">Přehled sezón</h2>
+      {loaded && seasons.length === 0 && <p className="text-sm text-gray-500">Zatím žádné ročníky.</p>}
+      <div className="flex flex-col gap-8">
+        {seasons.map((season) => {
+          const seasonItems = items.filter((i) => i.season_id === season.id)
+          return (
+            <div key={season.id}>
+              <p className="text-base font-bold mb-2">{season.year}</p>
+              {seasonItems.length === 0 ? (
+                <p className="text-sm text-gray-400">Bez kousků.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {seasonItems.map((item) => (
+                    <li key={item.id} className="flex items-center gap-3 text-sm">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name} className="w-10 h-10 object-contain" />
+                      ) : (
+                        <span className="w-10 h-10" />
+                      )}
+                      <span className="flex-1">{item.name}</span>
+                      <span className="text-gray-600">{item.price_kc} KČ</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
