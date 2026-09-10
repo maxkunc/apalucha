@@ -10,8 +10,8 @@ const fieldLabel = 'flex flex-col gap-1 text-xs font-bold uppercase tracking-wid
 const textInput =
   'border-2 border-black px-3 py-2 text-base font-normal normal-case tracking-normal bg-white focus:outline-2 focus:outline-black'
 const primaryButton =
-  'self-start bg-black text-white px-5 py-3 text-sm font-bold uppercase tracking-wide hover:opacity-75'
-const linkButton = 'text-sm text-gray-400 underline hover:text-black'
+  'self-start bg-black text-white px-5 py-3 text-sm font-bold uppercase tracking-wide hover:opacity-75 transition-opacity'
+const linkButton = 'text-sm text-gray-400 underline hover:text-black transition-colors'
 
 export default function Admin() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
@@ -29,17 +29,19 @@ export default function Admin() {
   }, [])
 
   return (
-    <div className="max-w-md mx-auto px-5 py-12 sm:py-16">
-      <a
-        href={import.meta.env.BASE_URL}
-        className="inline-block text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-10"
-      >
-        ← Zpět na web
-      </a>
-      <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight mb-10">Správa</h1>
-      {signedIn === null && <p className="text-gray-500 text-sm">Načítám...</p>}
-      {signedIn === false && <LoginForm />}
-      {signedIn === true && <AdminForms />}
+    <div className="min-h-dvh w-full flex justify-center px-6 py-14 sm:py-20">
+      <div className="w-full max-w-md">
+        <a
+          href={import.meta.env.BASE_URL}
+          className="inline-block text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors mb-10"
+        >
+          ← Zpět na web
+        </a>
+        <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight mb-10">Správa</h1>
+        {signedIn === null && <p className="text-gray-500 text-sm">Načítám...</p>}
+        {signedIn === false && <LoginForm />}
+        {signedIn === true && <AdminForms />}
+      </div>
     </div>
   )
 }

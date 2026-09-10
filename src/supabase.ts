@@ -5,4 +5,4 @@ const SUPABASE_ANON_KEY = 'sb_publishable_9YcEPsNGssC2taZAvnQiKA_6oIESO7T'
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-export const ADMIN_EMAIL = 'kunc.maxik@gmail.com'
+export const ADMIN_EMAIL = 'admin@apalucha.cz'
