@@ -30,4 +30,8 @@ alter policy "Admin can delete merch images" on storage.objects
   using (bucket_id = 'merch-images' and (auth.jwt() ->> 'email') = 'admin@apalucha.cz');
 
 -- Note: the admin auth account itself (admin@apalucha.cz) was created directly
--- against this project via the Supabase Auth admin API / SQL, not tracked here.
+-- against this project via SQL, not tracked here. IMPORTANT: GoTrue fails
+-- login with a 500 ("converting NULL to string is unsupported") if the
+-- token columns (confirmation_token, recovery_token, email_change_token_new,
+-- email_change, email_change_token_current, phone_change, phone_change_token,
+-- reauthentication_token) are left NULL — they must be set to '' on insert.
