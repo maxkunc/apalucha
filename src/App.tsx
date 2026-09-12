@@ -18,11 +18,25 @@ export default function App() {
   const [items, setItems] = useState<Item[]>([])
   const [error, setError] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  useEffect(() => {
+    if (!lightbox) return
+    document.body.style.overflow = 'hidden'
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightbox])
 
   useEffect(() => {
     let cancelled = false
@@ -105,7 +119,8 @@ export default function App() {
                           src={item.image_url || PLACEHOLDER_IMG}
                           alt={`${item.name} – přední strana`}
                           loading="lazy"
-                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-105"
+                          onClick={() => setLightbox(item.image_url || PLACEHOLDER_IMG)}
+                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] cursor-zoom-in transition-transform duration-300 hover:scale-105"
                         />
                         <div className="min-w-[110px] text-center sm:text-left">
                           <p className="text-base sm:text-lg font-bold uppercase tracking-wide">{item.name}</p>
@@ -115,7 +130,8 @@ export default function App() {
                           src={item.image_back_url || item.image_url || PLACEHOLDER_IMG}
                           alt={`${item.name} – zadní strana`}
                           loading="lazy"
-                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] transition-transform duration-300 hover:scale-105"
+                          onClick={() => setLightbox(item.image_back_url || item.image_url || PLACEHOLDER_IMG)}
+                          className="w-64 sm:w-72 md:w-80 lg:w-96 aspect-square object-contain drop-shadow-[0_0_14px_rgba(0,0,0,0.18)] cursor-zoom-in transition-transform duration-300 hover:scale-105"
                         />
                       </div>
                     ))}
@@ -134,6 +150,27 @@ export default function App() {
           Admin
         </a>
       </footer>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-white flex items-center justify-center p-6 sm:p-12 cursor-zoom-out"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox}
+            alt=""
+            className="max-w-full max-h-full object-contain drop-shadow-[0_0_22px_rgba(0,0,0,0.18)]"
+          />
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            aria-label="Zavřít"
+            className="absolute top-5 right-6 text-black text-4xl leading-none font-light hover:opacity-60 transition-opacity"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   )
 }
